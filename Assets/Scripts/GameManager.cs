@@ -72,38 +72,72 @@ public class GameManager : MonoBehaviour
                     vector3 = unevenstartingVector + vector3;
                 }
 
-                GameObject gameObject;
+                Tile newTile = null;
                 var currentPixel = texture2D.GetPixel(x, z);
 
                 if (Math.Abs(currentPixel.maxColorComponent) < 0.001)
                 {
-                    gameObject = prefabs.Single(p => p.name == "WaterTile");
+                    newTile = new Tile
+                    {
+                        _gameObject = prefabs.Single(p => p.name == "WaterTile"),
+                        _type = Tile.TileTypes.Water
+                    };
                 }
                 else if (Math.Abs(currentPixel.maxColorComponent) < 0.2)
                 {
-                    gameObject = prefabs.Single(p => p.name == "SandTile");
+                    newTile = new Tile
+                    {
+                        _gameObject = prefabs.Single(p => p.name == "SandTile"),
+                        _type = Tile.TileTypes.Sand
+                    };
                 }
                 else if (Math.Abs(currentPixel.maxColorComponent) < 0.4)
                 {
-                    gameObject = prefabs.Single(p => p.name == "GrassTile");
+                    newTile = new Tile
+                    {
+                        _gameObject = prefabs.Single(p => p.name == "GrassTile"),
+                        _type = Tile.TileTypes.Grass
+                    };
                 }
                 else if (Math.Abs(currentPixel.maxColorComponent) < 0.6)
                 {
-                    gameObject = prefabs.Single(p => p.name == "ForestTile");
+                    newTile = new Tile
+                    {
+                        _gameObject = prefabs.Single(p => p.name == "ForestTile"),
+                        _type = Tile.TileTypes.Forest
+                    };
                 }
                 else if (Math.Abs(currentPixel.maxColorComponent) < 0.8)
                 {
-                    gameObject = prefabs.Single(p => p.name == "StoneTile");
+                    newTile = new Tile
+                    {
+                        _gameObject = prefabs.Single(p => p.name == "StoneTile"),
+                        _type = Tile.TileTypes.Stone
+                    };
                 }
                 else
                 {
-                    gameObject = prefabs.Single(p => p.name == "MountainTile");
+                    newTile = new Tile
+                    {
+                        _gameObject = prefabs.Single(p => p.name == "MountainTile"),
+                        _type = Tile.TileTypes.Mountain
+                    };
                 }
 
                 vector3.y = currentPixel.maxColorComponent * 40;
-                Instantiate(gameObject, vector3, Quaternion.identity);
+                Instantiate(newTile._gameObject, vector3, Quaternion.identity);
+                _tileMap[x, z] = newTile;
             }
         }
+        
+        for (var x = 0; x < _tileMap.GetLength(0); x++)
+        {
+            for (var z = 0; z < _tileMap.GetLength(1); z++)
+            {
+                FindNeighborsOfTile(_tileMap[x, z]);
+            }
+        }
+
     }
 
     private static IEnumerable<GameObject> GetPreFabs()
