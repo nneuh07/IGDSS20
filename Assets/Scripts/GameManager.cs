@@ -123,11 +123,16 @@ public class GameManager : MonoBehaviour
                         _type = Tile.TileTypes.Mountain
                     };
                 }
-
+                
+                //Debug.Log("Currently at: " + newTile._type);
+                
                 vector3.y = currentPixel.maxColorComponent * 40;
                 Instantiate(newTile._gameObject, vector3, Quaternion.identity);
-                _tileMap[x, z] = newTile;
+                
+                 //_tileMap[x, z] = newTile; --> Error hier ?!?
+                
             }
+            
         }
         
         for (var x = 0; x < _tileMap.GetLength(0); x++)
