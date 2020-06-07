@@ -247,6 +247,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0c4fb070738f3544ea560ef08186d72d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  cam: {fileID: 512232609}
+  gameManager: {fileID: 1768092941}
 --- !u!1 &834136085
 GameObject:
   m_ObjectHideFlags: 0
@@ -271,11 +273,13 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 834136085}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0c4fb070738f3544ea560ef08186d72d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  cam: {fileID: 512232609}
+  gameManager: {fileID: 1768092941}
 --- !u!4 &834136087
 Transform:
   m_ObjectHideFlags: 0
@@ -475,6 +479,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd580981bf7ab5845976a690fd1035a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _buildingPrefabs: []
+  _selectedBuildingPrefabIndex: 0
+  _ResourcesInWarehouse_Fish: 0
+  _ResourcesInWarehouse_Wood: 0
+  _ResourcesInWarehouse_Planks: 0
+  _ResourcesInWarehouse_Wool: 0
+  _ResourcesInWarehouse_Clothes: 0
+  _ResourcesInWarehouse_Potato: 0
+  _ResourcesInWarehouse_Schnapps: 0
 --- !u!4 &1768092942
 Transform:
   m_ObjectHideFlags: 0

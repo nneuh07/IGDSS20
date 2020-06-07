@@ -9,43 +9,58 @@ using UnityEngine.SocialPlatforms.GameCenter;
 
 public class GameManager : MonoBehaviour
 {
-    
     #region Map generation
+
     private Tile[,] _tileMap; //2D array of all spawned tiles
+
     #endregion
 
     #region Buildings
+
     public GameObject[] _buildingPrefabs; //References to the building prefabs
-    public int _selectedBuildingPrefabIndex = 0; //The current index used for choosing a prefab to spawn from the _buildingPrefabs list
+
+    public int
+        _selectedBuildingPrefabIndex =
+            0; //The current index used for choosing a prefab to spawn from the _buildingPrefabs list
+
     #endregion
 
 
     #region Resources
-    private Dictionary<ResourceTypes, float> _resourcesInWarehouse = new Dictionary<ResourceTypes, float>(); //Holds a number of stored resources for every ResourceType
+
+    private Dictionary<ResourceTypes, float>
+        _resourcesInWarehouse =
+            new Dictionary<ResourceTypes, float>(); //Holds a number of stored resources for every ResourceType
 
     //A representation of _resourcesInWarehouse, broken into individual floats. Only for display in inspector, will be removed and replaced with UI later
-    [SerializeField]
-    private float _ResourcesInWarehouse_Fish;
-    [SerializeField]
-    private float _ResourcesInWarehouse_Wood;
-    [SerializeField]
-    private float _ResourcesInWarehouse_Planks;
-    [SerializeField]
-    private float _ResourcesInWarehouse_Wool;
-    [SerializeField]
-    private float _ResourcesInWarehouse_Clothes;
-    [SerializeField]
-    private float _ResourcesInWarehouse_Potato;
-    [SerializeField]
-    private float _ResourcesInWarehouse_Schnapps;
+    [SerializeField] private float _ResourcesInWarehouse_Fish;
+    [SerializeField] private float _ResourcesInWarehouse_Wood;
+    [SerializeField] private float _ResourcesInWarehouse_Planks;
+    [SerializeField] private float _ResourcesInWarehouse_Wool;
+    [SerializeField] private float _ResourcesInWarehouse_Clothes;
+    [SerializeField] private float _ResourcesInWarehouse_Potato;
+    [SerializeField] private float _ResourcesInWarehouse_Schnapps;
+
     #endregion
 
     #region Enumerations
-    public enum ResourceTypes { None, Fish, Wood, Planks, Wool, Clothes, Potato, Schnapps }; //Enumeration of all available resource types. Can be addressed from other scripts by calling GameManager.ResourceTypes
+
+    public enum ResourceTypes
+    {
+        None,
+        Fish,
+        Wood,
+        Planks,
+        Wool,
+        Clothes,
+        Potato,
+        Schnapps
+    }; //Enumeration of all available resource types. Can be addressed from other scripts by calling GameManager.ResourceTypes
+
     #endregion
 
     #region MonoBehaviour
-    
+
     // Start is called before the first frame update
     void Start()
     {
@@ -54,6 +69,8 @@ public class GameManager : MonoBehaviour
         var texture2D = Resources.Load<Texture2D>("Heightmap_16");
         if (texture2D == null)
             throw new ArgumentNullException(nameof(texture2D));
+        _tileMap = new Tile[texture2D.width, texture2D.height];
+
         for (var x = 0; x < texture2D.width; x++)
         {
             for (var z = 0; z < texture2D.height; z++)
@@ -72,77 +89,53 @@ public class GameManager : MonoBehaviour
                     vector3 = unevenstartingVector + vector3;
                 }
 
-                Tile newTile = null;
+                GameObject gameObject;
                 var currentPixel = texture2D.GetPixel(x, z);
 
                 if (Math.Abs(currentPixel.maxColorComponent) < 0.001)
                 {
-                    newTile = new Tile
-                    {
-                        _gameObject = prefabs.Single(p => p.name == "WaterTile"),
-                        _type = Tile.TileTypes.Water
-                    };
+                    gameObject = prefabs.Single(p => p.name == "WaterTile");
                 }
                 else if (Math.Abs(currentPixel.maxColorComponent) < 0.2)
                 {
-                    newTile = new Tile
-                    {
-                        _gameObject = prefabs.Single(p => p.name == "SandTile"),
-                        _type = Tile.TileTypes.Sand
-                    };
+                    gameObject = prefabs.Single(p => p.name == "SandTile");
                 }
                 else if (Math.Abs(currentPixel.maxColorComponent) < 0.4)
                 {
-                    newTile = new Tile
-                    {
-                        _gameObject = prefabs.Single(p => p.name == "GrassTile"),
-                        _type = Tile.TileTypes.Grass
-                    };
+                    gameObject = prefabs.Single(p => p.name == "GrassTile");
                 }
                 else if (Math.Abs(currentPixel.maxColorComponent) < 0.6)
                 {
-                    newTile = new Tile
-                    {
-                        _gameObject = prefabs.Single(p => p.name == "ForestTile"),
-                        _type = Tile.TileTypes.Forest
-                    };
+                    gameObject = prefabs.Single(p => p.name == "ForestTile");
                 }
                 else if (Math.Abs(currentPixel.maxColorComponent) < 0.8)
                 {
-                    newTile = new Tile
-                    {
-                        _gameObject = prefabs.Single(p => p.name == "StoneTile"),
-                        _type = Tile.TileTypes.Stone
-                    };
+                    gameObject = prefabs.Single(p => p.name == "StoneTile");
                 }
                 else
                 {
-                    newTile = new Tile
-                    {
-                        _gameObject = prefabs.Single(p => p.name == "MountainTile"),
-                        _type = Tile.TileTypes.Mountain
-                    };
+                    gameObject = prefabs.Single(p => p.name == "MountainTile");
                 }
-                
-                //Debug.Log("Currently at: " + newTile._type);
-                
+
                 vector3.y = currentPixel.maxColorComponent * 40;
-                Instantiate(newTile._gameObject, vector3, Quaternion.identity);
-                
-                 //_tileMap[x, z] = newTile; --> Error hier ?!?
-                
+                var newGameObject = Instantiate(gameObject, vector3, Quaternion.identity);
+                var tile = newGameObject.GetComponent<Tile>();
+                tile._coordinateWidth = x;
+                tile._coordinateHeight = z;
+                // Debug.Log(tile._coordinateHeight + " " + tile._coordinateWidth);
+                _tileMap[x, z] = tile;
             }
-            
         }
-        
+
         for (var x = 0; x < _tileMap.GetLength(0); x++)
         {
             for (var z = 0; z < _tileMap.GetLength(1); z++)
             {
-                FindNeighborsOfTile(_tileMap[x, z]);
+                var tile = _tileMap[x, z];
+                Debug.Log(tile._coordinateWidth + " " + tile._coordinateHeight);
+                tile._neighborTiles = FindNeighborsOfTile(tile);
             }
         }
-
     }
 
     private static IEnumerable<GameObject> GetPreFabs()
@@ -164,10 +157,11 @@ public class GameManager : MonoBehaviour
         HandleKeyboardInput();
         UpdateInspectorNumbersForResources();
     }
-    
-     #endregion
+
+    #endregion
 
     #region Methods
+
     //Makes the resource dictionary usable by populating the values and keys
     void PopulateResourceDictionary()
     {
@@ -246,42 +240,74 @@ public class GameManager : MonoBehaviour
 
     //Is called by MouseManager when a tile was clicked
     //Forwards the tile to the method for spawning buildings
-    public void TileClicked(int height, int width)
+    public void TileClicked(Tile tile)
     {
-        Tile t = _tileMap[height, width];
-        PlaceBuildingOnTile(t);
+        PlaceBuildingOnTile(tile);
     }
 
     //Checks if the currently selected building type can be placed on the given tile and then instantiates an instance of the prefab
     private void PlaceBuildingOnTile(Tile t)
     {
+        Debug.Log(t._type);
         //if there is building prefab for the number input
         if (_selectedBuildingPrefabIndex < _buildingPrefabs.Length)
         {
             //TODO: check if building can be placed and then istantiate it
-
         }
     }
 
     //Returns a list of all neighbors of a given tile --> Aber wie starte ich das??? 
     private List<Tile> FindNeighborsOfTile(Tile t)
     {
-        List<Tile> result = new List<Tile>();
-        Tile[] tiles = FindObjectsOfType<Tile>();
+        var neighborList = new List<Tile>();
 
-        foreach (Tile tile in tiles)
-        {
-            if (tile.gameObject.GetInstanceID() != gameObject.GetInstanceID())
-            {
-                if (tile.col3d.bounds.Intersects(tile.gameObject.GetComponent<SphereCollider>().bounds))
-                {
-                    Debug.Log("[" + gameObject.name + "] found neighbour: " + tile.gameObject.name);
-                    result.Add(tile);
-                }
-            }
-        }
-        return result;
+        if (t._coordinateWidth + 1 < _tileMap.GetLength(0))
+            neighborList.Add(_tileMap[t._coordinateHeight, t._coordinateWidth + 1]);
+
+        if (t._coordinateHeight - 1 >= 0)
+            neighborList.Add(_tileMap[t._coordinateHeight - 1, t._coordinateWidth]);
+
+        if (t._coordinateWidth - 1 >= 0)
+            neighborList.Add(_tileMap[t._coordinateHeight, t._coordinateWidth - 1]);
+
+        if (t._coordinateWidth - 1 >= 0 && t._coordinateHeight - 1 >= 0)
+            neighborList.Add(_tileMap[t._coordinateHeight - 1, t._coordinateWidth - 1]);
+
+        if (t._coordinateHeight + 1 < _tileMap.GetLength(1))
+            neighborList.Add(_tileMap[t._coordinateHeight + 1, t._coordinateWidth]);
+
+
+        if (t._coordinateWidth + 1 < _tileMap.GetLength(0) && t._coordinateHeight + 1 < _tileMap.GetLength(1))
+            neighborList.Add(_tileMap[t._coordinateHeight + 1, t._coordinateWidth + 1]);
+
+        return neighborList;
+
+        // List<Tile> result = new List<Tile>();
+        // // Tile[] tiles = FindObjectsOfType<Tile>();
+        // Debug.Log($"Check tile at position {t.gameObject.transform.position}");
+        // var colliderList = Physics.OverlapSphere(t.gameObject.transform.position, 8)
+        //     .Where(collider => collider.GetComponent<Tile>() != null &&
+        //                        collider.gameObject.transform.position != t.gameObject.transform.position)
+        //     .Select(c => c.GetComponent<Tile>())
+        //     .ToList();
+        // return colliderList;
+        // foreach (Tile tile in tiles)
+        // {
+        //     if (tile.gameObject.GetInstanceID() != t.gameObject.GetInstanceID())
+        //     {
+        //         var colliders = Physics.OverlapSphere(tile.gameObject.transform.position, 12);
+        //
+        //         result.Add(colliders.FirstOrDefault().gameObject.GetComponent<Tile>());
+        //         // if (t.gameObject.GetComponent<SphereCollider>())
+        //         // {
+        //         //     Debug.Log("[" + gameObject.name + "] found neighbour: " + tile.gameObject.name);
+        //         //     result.Add(tile);
+        //         // }
+        //     }
+        // }
+        //
+        // return result;
     }
-    #endregion
 
+    #endregion
 }
