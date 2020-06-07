@@ -28,6 +28,8 @@ public class GameManager : MonoBehaviour
 
     #region Resources
 
+    float tick = 0f;
+
     private Dictionary<ResourceTypes, float>
         _resourcesInWarehouse =
             new Dictionary<ResourceTypes, float>(); //Holds a number of stored resources for every ResourceType
@@ -40,6 +42,9 @@ public class GameManager : MonoBehaviour
     [SerializeField] private float _ResourcesInWarehouse_Clothes;
     [SerializeField] private float _ResourcesInWarehouse_Potato;
     [SerializeField] private float _ResourcesInWarehouse_Schnapps;
+
+    [SerializeField] private float income = 100f;
+    [SerializeField] private float account;
 
     #endregion
 
@@ -65,6 +70,7 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         PopulateResourceDictionary();
+        account = income;
         var prefabs = GetPreFabs();
         var texture2D = Resources.Load<Texture2D>("Heightmap_16");
         if (texture2D == null)
@@ -78,13 +84,13 @@ public class GameManager : MonoBehaviour
                 Vector3 vector3;
                 if (x % 2 == 0)
                 {
-                    Vector3 evenstartingVector = new Vector3(0, 0, 0);
+                    var evenstartingVector = new Vector3(0, 0, 0);
                     vector3 = new Vector3((float) 8.67 * x, 0, 10 * z);
                     vector3 = evenstartingVector + vector3;
                 }
                 else
                 {
-                    Vector3 unevenstartingVector = new Vector3((float) 8.67, 0, 5);
+                    var unevenstartingVector = new Vector3((float) 8.67, 0, 5);
                     vector3 = new Vector3((float) 8.67 * (x - 1), 0, 10 * z);
                     vector3 = unevenstartingVector + vector3;
                 }
@@ -122,7 +128,6 @@ public class GameManager : MonoBehaviour
                 var tile = newGameObject.GetComponent<Tile>();
                 tile._coordinateWidth = x;
                 tile._coordinateHeight = z;
-                // Debug.Log(tile._coordinateHeight + " " + tile._coordinateWidth);
                 _tileMap[x, z] = tile;
             }
         }
@@ -132,10 +137,11 @@ public class GameManager : MonoBehaviour
             for (var z = 0; z < _tileMap.GetLength(1); z++)
             {
                 var tile = _tileMap[x, z];
-                Debug.Log(tile._coordinateWidth + " " + tile._coordinateHeight);
                 tile._neighborTiles = FindNeighborsOfTile(tile);
             }
         }
+
+        StartEconomy();
     }
 
     private static IEnumerable<GameObject> GetPreFabs()
@@ -155,7 +161,74 @@ public class GameManager : MonoBehaviour
     void Update()
     {
         HandleKeyboardInput();
+        StartEconomy();
+
         UpdateInspectorNumbersForResources();
+    }
+
+    private void StartEconomy()
+    {
+        tick += Time.deltaTime;
+        if (!(tick >= 1f)) return;
+        tick %= 1f;
+        RunMoneyCycle();
+    }
+
+    private void RunMoneyCycle()
+    {
+        account += income / 60;
+        RunBuildingCycle();
+    }
+
+    private void RunBuildingCycle()
+    {
+        foreach (var tile in _tileMap)
+        {
+            if (tile._building == null) continue;
+            var upkeep = tile._building.upkeep;
+            if (!(account >= upkeep)) continue;
+            account -= upkeep / 60;
+            RunProductionCycle(tile._building);
+        }
+    }
+
+    private void RunProductionCycle(Building building)
+    {
+        if (building.efficiencyScalesWith != Tile.TileTypes.Empty)
+        {
+            var count = building.tileReference._neighborTiles.Count(x =>
+                x._type == building.efficiencyScalesWith &&
+                x._building == null);
+            if (count < building.minNeighbours)
+            {
+                building.efficiencyValue = 0f;
+            }
+            else if (count >= building.maxNeighbours)
+            {
+                building.efficiencyValue = 1f;
+            }
+            else
+            {
+                building.efficiencyValue = count / building.maxNeighbours;
+            }
+        }
+
+        var productionEfficiency = building.resourceInterval / building.efficiencyValue;
+
+        if (building.inputResources != null)
+        {
+            if (building.inputResources.All(HasResourceInWarehoues))
+            {
+                foreach (var res in building.inputResources)
+                    _resourcesInWarehouse[res] -= 1;
+            }
+            else
+            {
+                return;
+            }
+        }
+
+        _resourcesInWarehouse[building.outputResource] += building.output / productionEfficiency;
     }
 
     #endregion
@@ -206,17 +279,17 @@ public class GameManager : MonoBehaviour
         {
             _selectedBuildingPrefabIndex = 6;
         }
-        else if (Input.GetKeyDown(KeyCode.Alpha8))
+        //Cheat Code
+        else if (Input.GetKeyDown(KeyCode.A))
         {
-            _selectedBuildingPrefabIndex = 7;
-        }
-        else if (Input.GetKeyDown(KeyCode.Alpha9))
-        {
-            _selectedBuildingPrefabIndex = 8;
-        }
-        else if (Input.GetKeyDown(KeyCode.Alpha0))
-        {
-            _selectedBuildingPrefabIndex = 9;
+            account = 10000f;
+            _resourcesInWarehouse[ResourceTypes.Fish] = 1000f;
+            _resourcesInWarehouse[ResourceTypes.Wood] = 1000f;
+            _resourcesInWarehouse[ResourceTypes.Planks] = 1000f;
+            _resourcesInWarehouse[ResourceTypes.Wool] = 1000f;
+            _resourcesInWarehouse[ResourceTypes.Clothes] = 1000f;
+            _resourcesInWarehouse[ResourceTypes.Potato] = 1000f;
+            _resourcesInWarehouse[ResourceTypes.Schnapps] = 1000f;
         }
     }
 
@@ -238,6 +311,12 @@ public class GameManager : MonoBehaviour
         return _resourcesInWarehouse[resource] >= 1;
     }
 
+    public bool HasEnoughResourcesInWarehoues(ResourceTypes resource, float plankCost)
+    {
+        return _resourcesInWarehouse[resource] >= plankCost;
+    }
+
+
     //Is called by MouseManager when a tile was clicked
     //Forwards the tile to the method for spawning buildings
     public void TileClicked(Tile tile)
@@ -248,11 +327,23 @@ public class GameManager : MonoBehaviour
     //Checks if the currently selected building type can be placed on the given tile and then instantiates an instance of the prefab
     private void PlaceBuildingOnTile(Tile t)
     {
-        Debug.Log(t._type);
-        //if there is building prefab for the number input
+        //if there is building prefab for the number input4
         if (_selectedBuildingPrefabIndex < _buildingPrefabs.Length)
         {
-            //TODO: check if building can be placed and then istantiate it
+            var preFab = _buildingPrefabs[_selectedBuildingPrefabIndex].GetComponent<Building>();
+            if (t != null && t._building == null && preFab.canBeBuiltOn.Contains(t._type) &&
+                HasEnoughResourcesInWarehoues(ResourceTypes.Planks, preFab.plankCost) && account >= preFab.buildCost)
+            {
+                var newBuildingGameObject =
+                    Instantiate(_buildingPrefabs[_selectedBuildingPrefabIndex], t.gameObject.transform);
+
+                var b = newBuildingGameObject.GetComponent<Building>();
+                t._building = b;
+                b.tileReference = t;
+
+                account -= b.buildCost;
+                // _resourcesInWarehouse[ResourceTypes.Planks] -= b.plankCost;
+            }
         }
     }
 
@@ -281,32 +372,6 @@ public class GameManager : MonoBehaviour
             neighborList.Add(_tileMap[t._coordinateHeight + 1, t._coordinateWidth + 1]);
 
         return neighborList;
-
-        // List<Tile> result = new List<Tile>();
-        // // Tile[] tiles = FindObjectsOfType<Tile>();
-        // Debug.Log($"Check tile at position {t.gameObject.transform.position}");
-        // var colliderList = Physics.OverlapSphere(t.gameObject.transform.position, 8)
-        //     .Where(collider => collider.GetComponent<Tile>() != null &&
-        //                        collider.gameObject.transform.position != t.gameObject.transform.position)
-        //     .Select(c => c.GetComponent<Tile>())
-        //     .ToList();
-        // return colliderList;
-        // foreach (Tile tile in tiles)
-        // {
-        //     if (tile.gameObject.GetInstanceID() != t.gameObject.GetInstanceID())
-        //     {
-        //         var colliders = Physics.OverlapSphere(tile.gameObject.transform.position, 12);
-        //
-        //         result.Add(colliders.FirstOrDefault().gameObject.GetComponent<Tile>());
-        //         // if (t.gameObject.GetComponent<SphereCollider>())
-        //         // {
-        //         //     Debug.Log("[" + gameObject.name + "] found neighbour: " + tile.gameObject.name);
-        //         //     result.Add(tile);
-        //         // }
-        //     }
-        // }
-        //
-        // return result;
     }
 
     #endregion

@@ -15,7 +15,8 @@ public class Building : MonoBehaviour
     [SerializeField] public float efficiencyValue = 1f; //Efficiency based on surrounding tiles 
     [SerializeField] public float resourceInterval = 0f; //If operation on 100% efficiency
     [SerializeField] public float output; //Number of output per cycle
-    [SerializeField] public List<Tile.TileTypes> tiles; //Which tiles it can be built on
+    [SerializeField] public List<Tile.TileTypes> canBeBuiltOn; //Which tiles it can be built on
+    [SerializeField] public Tile.TileTypes efficiencyScalesWith;
     [SerializeField] public float minNeighbours; //Minimum neighbours
     [SerializeField] public float maxNeighbours; //Max neighbour 
     [SerializeField] public List<GameManager.ResourceTypes> inputResources = new List<GameManager.ResourceTypes>(); // Choice for input resources
