@@ -19,6 +19,8 @@ public class GameManager : MonoBehaviour
 
     public GameObject[] _buildingPrefabs; //References to the building prefabs
 
+    public JobManager _jobManager;
+
     public int
         _selectedBuildingPrefabIndex =
             0; //The current index used for choosing a prefab to spawn from the _buildingPrefabs list
@@ -177,6 +179,7 @@ public class GameManager : MonoBehaviour
     private void RunMoneyCycle()
     {
         account += income / 60;
+        account += _jobManager.getNumberOfWorkers() * 50 / 60;
         RunBuildingCycle();
     }
 
@@ -184,42 +187,48 @@ public class GameManager : MonoBehaviour
     {
         foreach (var tile in _tileMap)
         {
-            if (tile._building == null) continue;
-            var upkeep = tile._building.upkeep;
+            if (tile.Building == null) continue;
+            var upkeep = tile.Building.upkeep;
             if (!(account >= upkeep)) continue;
             account -= upkeep / 60;
-            RunProductionCycle(tile._building);
+            if (tile.Building.type != Building.BuildingTypes.House)
+            {
+                RunProductionCycle(tile.Building as ProductionBuilding);
+            }
         }
     }
 
-    private void RunProductionCycle(Building building)
+    private void RunProductionCycle(ProductionBuilding productionBuilding)
     {
-        if (building.efficiencyScalesWith != Tile.TileTypes.Empty)
+        if (productionBuilding.efficiencyScalesWith != Tile.TileTypes.Empty)
         {
-            var count = building.tileReference._neighborTiles.Count(x =>
-                x._type == building.efficiencyScalesWith &&
-                x._building == null);
-            if (count < building.minNeighbours)
+            var count = productionBuilding.tileReference._neighborTiles.Count(x =>
+                x._type == productionBuilding.efficiencyScalesWith &&
+                x.Building == null);
+            if (count < productionBuilding.minNeighbours)
             {
-                building.efficiencyValue = 0f;
+                productionBuilding.efficiencyValue = 0f;
             }
-            else if (count >= building.maxNeighbours)
+            else if (count >= productionBuilding.maxNeighbours)
             {
-                building.efficiencyValue = 1f;
+                productionBuilding.efficiencyValue = 1f;
             }
             else
             {
-                building.efficiencyValue = count / building.maxNeighbours;
+                productionBuilding.efficiencyValue = count / productionBuilding.maxNeighbours;
             }
         }
+        
+        //TODO: Average Happiness
+        //TODO: Verhältnis Available & Occupied Jobs
 
-        var productionEfficiency = building.resourceInterval / building.efficiencyValue;
+        var productionEfficiency = productionBuilding.resourceInterval / productionBuilding.efficiencyValue;
 
-        if (building.inputResources != null)
+        if (productionBuilding.inputResources != null)
         {
-            if (building.inputResources.All(HasResourceInWarehoues))
+            if (productionBuilding.inputResources.All(HasResourceInWarehoues))
             {
-                foreach (var res in building.inputResources)
+                foreach (var res in productionBuilding.inputResources)
                     _resourcesInWarehouse[res] -= 1;
             }
             else
@@ -228,7 +237,7 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        _resourcesInWarehouse[building.outputResource] += building.output / productionEfficiency;
+        _resourcesInWarehouse[productionBuilding.outputResource] += productionBuilding.output / productionEfficiency;
     }
 
     #endregion
@@ -278,6 +287,10 @@ public class GameManager : MonoBehaviour
         else if (Input.GetKeyDown(KeyCode.Alpha7))
         {
             _selectedBuildingPrefabIndex = 6;
+        }
+        else if (Input.GetKeyDown(KeyCode.Alpha8))
+        {
+            _selectedBuildingPrefabIndex = 7;
         }
         //Cheat Code
         else if (Input.GetKeyDown(KeyCode.A))
@@ -331,18 +344,18 @@ public class GameManager : MonoBehaviour
         if (_selectedBuildingPrefabIndex < _buildingPrefabs.Length)
         {
             var preFab = _buildingPrefabs[_selectedBuildingPrefabIndex].GetComponent<Building>();
-            if (t != null && t._building == null && preFab.canBeBuiltOn.Contains(t._type) &&
+            if (t != null && t.Building == null && preFab.canBeBuiltOn.Contains(t._type) &&
                 HasEnoughResourcesInWarehoues(ResourceTypes.Planks, preFab.plankCost) && account >= preFab.buildCost)
             {
                 var newBuildingGameObject =
                     Instantiate(_buildingPrefabs[_selectedBuildingPrefabIndex], t.gameObject.transform);
 
                 var b = newBuildingGameObject.GetComponent<Building>();
-                t._building = b;
+                t.Building = b;
                 b.tileReference = t;
 
                 account -= b.buildCost;
-                // _resourcesInWarehouse[ResourceTypes.Planks] -= b.plankCost;
+                _resourcesInWarehouse[ResourceTypes.Planks] -= b.plankCost;
             }
         }
     }
@@ -375,4 +388,16 @@ public class GameManager : MonoBehaviour
     }
 
     #endregion
+
+    public bool WorkerConsumed()
+    {
+        if (!(_resourcesInWarehouse[ResourceTypes.Clothes] > 0.1) ||
+            !(_resourcesInWarehouse[ResourceTypes.Fish] > 0.1) ||
+            !(_resourcesInWarehouse[ResourceTypes.Schnapps] > 0.1)) return false;
+        _ResourcesInWarehouse_Clothes -= 0.1f;
+        _ResourcesInWarehouse_Fish -= 0.1f;
+        _ResourcesInWarehouse_Schnapps -= 0.1f;
+        return true;
+
+    }
 }

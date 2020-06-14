@@ -40,7 +40,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1117571041900513576}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6bc48363fcd2e42269638b9656320cc6, type: 3}
+  m_Script: {fileID: 11500000, guid: ba55b5b921de24037bbf4e21d3a5d341, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   type: 0
@@ -51,8 +51,10 @@ MonoBehaviour:
   efficiencyValue: 1
   resourceInterval: 0
   output: 0
-  tiles: 
+  canBeBuiltOn: 
+  efficiencyScalesWith: 0
   minNeighbours: 0
   maxNeighbours: 0
+  _workers: []
   inputResources: 
   outputResource: 0
