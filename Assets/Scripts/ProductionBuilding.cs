@@ -21,11 +21,4 @@ public class ProductionBuilding : Building
     {
         
     }
-
-    public float AverageWorkerHappiness()
-    {
-        const float allHap = 0f;
-        _workers.Select(w => w._happiness += allHap);
-        return allHap / _workers.Count;
-    }
 }

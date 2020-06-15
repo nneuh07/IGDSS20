@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public abstract class Building : MonoBehaviour
@@ -30,7 +31,9 @@ public abstract class Building : MonoBehaviour
     [SerializeField] public float maxNeighbours; //Max neighbour 
 
     #region Manager References
-    protected JobManager _jobManager; //Reference to the JobManager
+
+    public JobManager _jobManager; //Reference to the JobManager
+    public GameManager _GameManager;
 
 
     #endregion
@@ -58,6 +61,13 @@ public abstract class Building : MonoBehaviour
     public void WorkerRemovedFromBuilding(Worker w)
     {
         _workers.Remove(w);
+    }
+    
+    public float AverageWorkerHappiness()
+    {
+        if (_workers.Any())
+            return _workers.Sum(worker => worker._happiness) / _workers.Count;
+        return 0f;
     }
 
     #endregion

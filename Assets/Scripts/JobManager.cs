@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class JobManager : MonoBehaviour
 {
-    private List<Job> _availableJobs = new List<Job>();
+    public List<Job> _availableJobs = new List<Job>();
     public List<Worker> _unoccupiedWorkers = new List<Worker>();
     public List<Job> _assignedJobs = new List<Job>();
     private float _numberWorkers = 0f;
@@ -33,14 +33,21 @@ public class JobManager : MonoBehaviour
 
     private void HandleUnoccupiedWorkers()
     {
-        if (_unoccupiedWorkers.Count <= 0) return;
+        if (!_unoccupiedWorkers.Any()) return;
+        var workersWithNewJob = new List<Worker>();
         foreach (var worker in _unoccupiedWorkers)
         {
             if (!_availableJobs.Any()) return;
-            var availableJob = _availableJobs.FirstOrDefault();
+            var availableJob = _availableJobs.First();
             availableJob?.AssignWorker(worker);
             _availableJobs.Remove(availableJob);
             _assignedJobs.Add(availableJob);
+            workersWithNewJob.Add(worker);
+        }
+
+        foreach (var worker in workersWithNewJob)
+        {
+            _unoccupiedWorkers.Remove(worker);
         }
     }
 

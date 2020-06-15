@@ -7,14 +7,14 @@ public class Worker : MonoBehaviour
 {
     #region Manager References
 
-    JobManager _jobManager; //Reference to the JobManager
-    GameManager _gameManager; //Reference to the GameManager
+    public JobManager _jobManager; //Reference to the JobManager
+    public GameManager _gameManager; //Reference to the GameManager
 
     #endregion
 
     private float tick = 0f;
     public float _age = 0f; // The age of this worker
-    public float _happiness = 0f; // The happiness of this worker
+    public float _happiness = 1f; // The happiness of this worker
 
     // Start is called before the first frame update
     void Start()
@@ -30,9 +30,6 @@ public class Worker : MonoBehaviour
 
     private void Age()
     {
-        //TODO: Implement a life cycle, where a Worker ages by 1 year every 15 real seconds.
-        //When becoming of age, the worker enters the job market, and leaves it when retiring.
-        //Eventually, the worker dies and leaves an empty space in his home. His Job occupation is also freed up
         tick += Time.deltaTime;
         if (!(tick >= 15f)) return;
         tick %= 15f;
@@ -59,14 +56,13 @@ public class Worker : MonoBehaviour
 
     private void Consume()
     {
-        _gameManager = GetComponent<GameManager>();
         if (_gameManager.WorkerConsumed())
         {
-            if (_happiness < 1)
+            _happiness += 0.1f;
+            if (_happiness > 1f)
             {
-                _happiness += 0.1f;
+                _happiness = 1f;
             }
-            else _happiness = 1f;
         }
         else
         {
@@ -82,7 +78,7 @@ public class Worker : MonoBehaviour
     {
         if (_jobManager._assignedJobs.Any(job => job._worker == this))
         {
-            _happiness += 0.1f;
+            _happiness += 0.2f;
         }
     }
 

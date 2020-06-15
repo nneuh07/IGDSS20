@@ -125,7 +125,7 @@ MonoBehaviour:
   type: 0
   upkeep: 10
   buildCost: 50
-  plankCost: 1
+  plankCost: 0
   tileReference: {fileID: 0}
   efficiencyValue: 1
   resourceInterval: 0
@@ -138,3 +138,4 @@ MonoBehaviour:
   _workers: []
   _characterPrefab: {fileID: 1041488450988964, guid: e29b7534c7a519f4896a43415b178317,
     type: 3}
+  maximalResidents: 10

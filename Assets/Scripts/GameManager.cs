@@ -218,9 +218,9 @@ public class GameManager : MonoBehaviour
                 productionBuilding.efficiencyValue = count / productionBuilding.maxNeighbours;
             }
         }
-        
-        //TODO: Average Happiness
-        //TODO: Verhältnis Available & Occupied Jobs
+
+        productionBuilding.efficiencyValue *= productionBuilding.AverageWorkerHappiness();
+        productionBuilding.efficiencyValue *= productionBuilding._workers.Count / (float)productionBuilding.NumberJobs;
 
         var productionEfficiency = productionBuilding.resourceInterval / productionBuilding.efficiencyValue;
 
@@ -353,6 +353,8 @@ public class GameManager : MonoBehaviour
                 var b = newBuildingGameObject.GetComponent<Building>();
                 t.Building = b;
                 b.tileReference = t;
+                b._jobManager = _jobManager;
+                b._GameManager = this;
 
                 account -= b.buildCost;
                 _resourcesInWarehouse[ResourceTypes.Planks] -= b.plankCost;
@@ -398,6 +400,5 @@ public class GameManager : MonoBehaviour
         _ResourcesInWarehouse_Fish -= 0.1f;
         _ResourcesInWarehouse_Schnapps -= 0.1f;
         return true;
-
     }
 }
