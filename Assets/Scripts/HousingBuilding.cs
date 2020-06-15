@@ -37,6 +37,7 @@ public class HousingBuilding : Building
         var currentEfficiency = 15f / AverageWorkerHappiness();
         if (!(tick >= currentEfficiency)) return;
         tick %= currentEfficiency;
+        if (_workers.Count >= maximalResidents) return;
         var newCharacterGameObject =
             Instantiate(_characterPrefab, transform);
         var worker = newCharacterGameObject.GetComponent<Worker>();

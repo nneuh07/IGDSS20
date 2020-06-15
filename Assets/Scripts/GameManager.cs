@@ -219,10 +219,17 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        productionBuilding.efficiencyValue *= productionBuilding.AverageWorkerHappiness();
-        productionBuilding.efficiencyValue *= productionBuilding._workers.Count / (float)productionBuilding.NumberJobs;
-
         var productionEfficiency = productionBuilding.resourceInterval / productionBuilding.efficiencyValue;
+        
+        if (Math.Abs(productionBuilding.AverageWorkerHappiness()) > 0.001)
+        {
+            productionEfficiency *= productionBuilding.AverageWorkerHappiness();
+        }
+
+        if (productionBuilding._workers.Any())
+        {
+            productionEfficiency *= productionBuilding._workers.Count / (float)productionBuilding.NumberJobs;
+        }
 
         if (productionBuilding.inputResources != null)
         {
